@@ -2,11 +2,33 @@
 django-mssql-filestream
 =======================
 
-This package provides necessary fields to use the SQL Server `Filestream <https://msdn.microsoft.com/fr-fr/library/gg471497.aspx>`_ feature.
+This package provides necessary fields to use the `SQL Server Filestream <https://msdn.microsoft.com/fr-fr/library/gg471497.aspx>`_ feature.
 
 Requires Django 1.7 and django-mssql 1.7.
 
 This should be considered at very alpha stage. Suggestions / contributions welcome !
+
+Prerequisites
+-------------
+You must have `enabled and properly configured the Filestream feature <https://technet.microsoft.com/en-us/library/cc645923(v=sql.110).aspx>`_ on your SQL Server Database.
+
+Also, as the Filestream feature does not support SQL authentication, you must use Windows authentication in your Django settings and set up your database accordingly. This can be done by leaving the ``USER`` and ``PASSWORD`` keys empty in the ``DATABASES`` section.
+
+.. code:: python
+
+    DATABASES = {
+        'default': {
+            'NAME': 'your_database_name',
+            'ENGINE': 'sqlserver_ado',
+            'HOST': 'your_host',
+            'USER': '',
+            'PASSWORD': '',
+            'OPTIONS' {
+                'provider': 'SQLNCLI11',
+                ...
+            }
+        }
+    }
 
 Quick start
 -----------
@@ -88,8 +110,9 @@ Advised optimisations
 
     def save(self, *args, **kwargs):
         content = None
-        if not self.pk:
+        if not self.pk and self.doc_content:
             content = self.doc_content
+            self.doc_content = None
         super(DocumentModel, self).save(*args, **kwargs)
         with self.document.open('wb') as f:
             f.write(content)
